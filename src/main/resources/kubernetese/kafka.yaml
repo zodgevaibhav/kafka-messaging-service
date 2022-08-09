@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  namespace: kafka-qa
+spec:
+  ports:
+  - port: 9092
+    protocol: TCP
+  selector:
+    app: kafka
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka
+  namespace: kafka-qa
+spec:
+  minReadySeconds: 60
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      containers:
+      - env:
+        - name: KAFKA_CFG_ZOOKEEPER_CONNECT
+          value: zookeeper:2181
+        - name: ALLOW_PLAINTEXT_LISTENER
+          value: "yes"
+        image: docker.io/bitnami/kafka:3.1
+        imagePullPolicy: Never
+        name: kafka
+        ports:
+        - containerPort: 9092
+        volumeMounts:
+        - mountPath: /bitnami
+          name: kafka-data
+      volumes:
+      - hostPath:
+          path: /Users/vaibhavzodge/Documents/ALL_GIT_REPO/DnyanYog/sre/k8s-apps/kafka/kafka/vol_kafka_data
+        name: kafka-data
